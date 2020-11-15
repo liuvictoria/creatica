@@ -2,8 +2,8 @@
 layout: page
 title: People
 description: About the authors
-img: people.png 
-caption: "Looking directly at the eclipse."
+img: people.jpg 
+caption: "Female empowerment"
 permalink: people
 sidebar: true
 ---
