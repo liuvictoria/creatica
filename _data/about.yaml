@@ -16,6 +16,7 @@ authors: >
 tldr: >
   [Run the app with Docker after cloning this repo](https://liuvictoria.github.io/creatica/index.html)
   
+  
   Imagine a world where only 3 things existed: hotdogs, carrots, and bananas. That's the world Seefood 2.0 lives in. It can classify these 3 foods with 92% validation accuracy. Periscope, here we come! 
 
 What It Does: >
