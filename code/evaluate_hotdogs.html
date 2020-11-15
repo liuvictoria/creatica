@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html>
 <head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -4564,7 +4564,7 @@ form{
   .bp3-running-text table th, table.bp3-html-table th{
     color:#182026;
     font-weight:600; }
-  
+
   .bp3-running-text table td,
   table.bp3-html-table td{
     color:#182026; }
@@ -14251,17 +14251,17 @@ a.anchor-link {
                 },
                 displayAlign: 'center',
                 CommonHTML: {
-                    linebreaks: { 
-                    automatic: true 
+                    linebreaks: {
+                    automatic: true
                     }
                 },
                 "HTML-CSS": {
-                    linebreaks: { 
-                    automatic: true 
+                    linebreaks: {
+                    automatic: true
                     }
                 }
             });
-        
+
             MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
         }
     }
@@ -14379,7 +14379,7 @@ a.anchor-link {
     <span class="c1">#requires the number of hotdog and nothotdog samples to be the exact same</span>
     <span class="n">test_data_type_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">test_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">test_data_type_count</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">test_data_type_count</span><span class="p">)</span>
-    
+
     <span class="k">return</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
 </pre></div>
 
@@ -14418,7 +14418,7 @@ a.anchor-link {
         <span class="k">if</span> <span class="n">incorrect_info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">i</span> <span class="o">=</span> <span class="n">incorrect_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">index_offset</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;test/nothotdog/*.jpg&#39;</span><span class="p">)))</span>
-    
+
             <span class="n">incorrect_classification_file_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="s1">&#39;nothotdog/&#39;</span><span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;test/nothotdog&#39;</span><span class="p">))[</span><span class="n">i</span> <span class="o">-</span> <span class="n">index_offset</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -14426,14 +14426,14 @@ a.anchor-link {
             <span class="n">incorrect_classification_file_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="s1">&#39;hotdog/&#39;</span><span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;test/hotdog&#39;</span><span class="p">))[</span><span class="n">i</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">incorrect_classification_file_paths</span>
-        
-        
+
+
 
 
 <span class="k">def</span> <span class="nf">get_image</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">pred_value</span><span class="p">,</span> <span class="n">true_value</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">file_path</span> <span class="o">==</span> <span class="s1">&#39;nothotdog/.DS_Store&#39;</span><span class="p">:</span>
         <span class="k">pass</span>
-    
+
     <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">test_img_path</span> <span class="o">+</span> <span class="n">file_path</span><span class="p">):</span>
         <span class="n">image_bgr</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">test_img_path</span> <span class="o">+</span> <span class="n">file_path</span><span class="p">,</span><span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_COLOR</span><span class="p">)</span>
         <span class="n">image_rgb</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">image_bgr</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2RGB</span><span class="p">)</span>
@@ -14465,7 +14465,7 @@ a.anchor-link {
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="c1"># comment out if using command line</span>
     <span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;debugging&#39;</span>
-    
+
 <span class="c1">#     args = parse_args()</span>
 <span class="c1">#     model_name = args.model_name</span>
 
@@ -14504,24 +14504,24 @@ a.anchor-link {
     <span class="nb">print</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Validation loss:&#39;</span><span class="p">,</span> <span class="n">score</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Validation accuracy:&#39;</span><span class="p">,</span> <span class="n">score</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    
-    
+
+
     <span class="c1">#print and save pictures that were inaccurately classified?</span>
     <span class="c1"># use previously written helper functions to find incorrect classification indices,</span>
     <span class="c1"># and the file paths to incorrectly classified images</span>
     <span class="n">rounded_predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_classes</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-    
+
     <span class="c1">#get incorrectly classified indices and their labels</span>
     <span class="n">incorrect_classification_indices</span><span class="p">,</span> <span class="n">incorrect_labels</span> <span class="o">=</span> <span class="n">incorrect_labels_indices</span><span class="p">(</span>
         <span class="n">rounded_predictions</span><span class="p">,</span> <span class="n">test_labels</span>
         <span class="p">)</span>
-    
+
     <span class="c1">#get file paths for incorrectly categorized pics to plot them later</span>
     <span class="n">incorrect_classification_file_paths</span> <span class="o">=</span> <span class="n">get_incorrect_classification_fpaths</span><span class="p">(</span><span class="n">incorrect_classification_indices</span><span class="p">)</span>
-    
+
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Some incorrectly classified images&#39;</span><span class="p">)</span>
-    
+
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">incorrect_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">incorrect_classification_indices</span><span class="p">):</span>
         <span class="c1">#let&#39;s print every 11th image for fun</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">//</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -14559,7 +14559,7 @@ a.anchor-link {
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14578,7 +14578,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14594,7 +14594,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14610,7 +14610,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14626,7 +14626,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14642,7 +14642,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14658,7 +14658,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14674,7 +14674,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14690,7 +14690,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14706,7 +14706,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 
 
@@ -14722,7 +14722,7 @@ Some incorrectly classified images
 
 <div class="jp-OutputArea-child">
 
-    
+
     <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[52]:</div>
 
 
