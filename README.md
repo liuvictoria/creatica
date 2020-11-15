@@ -7,20 +7,6 @@
 
 [See our website documenting our process](liuvictoria.github.io/creatica)
 
-# To Use
-- Clone this repo 
-- Install requirements
-- Run the script
-- Go to http://localhost:5000
-- Done! :tada:
-
-:point_down: Screenshot:
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/5097752/71063354-8caa1d00-213a-11ea-86eb-879238887c1f.png" height="420px" alt="">
-</p>
-
-
 
 ## Run with Docker
 
@@ -36,14 +22,38 @@ $ docker build -t hotdgg .
 
 # 3. Run!
 $ docker run -it --rm -p 5000:5000 hotdgg
+
+# 4. Open http://localhost:5000 on Safari and wait till the webpage is loaded. You may need to clear Safari cache if the app is not loading properly.
 ```
 
-Open http://localhost:5000 on Safari and wait till the webpage is loaded. You may need to clear Safari cache if the app is not loading properly.
+- Done! :tada:
+
+:point_down: Screenshot:
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/66798771/99161140-f3261b00-26bc-11eb-8d80-3db72b97a79f.png" height="420px" alt="">
+</p>
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/66798771/99161154-2668aa00-26bd-11eb-973e-e6b3deddfedb.png" height="420px" alt="">
+</p>
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/66798771/99161162-37192000-26bd-11eb-8ea7-2fe07dc95f40.png" height="420px" alt="">
+</p>
+
+
+
+
+
 
 
 
 ## References
 [Griffin Chure's Reproducible Website](https://github.com/gchure/reproducible_website)
+
 [Classification with Convolutional Neural Networks](https://towardsdatascience.com/building-the-hotdog-not-hotdog-classifier-from-hbos-silicon-valley-c0cb2317711f)
+
 [InceptionNetV3](https://keras.io/api/applications/inceptionv3/)
+
 [Deploying Keras Model with Flask](https://github.com/mtobeiyf/keras-flask-deploy-webapp)
