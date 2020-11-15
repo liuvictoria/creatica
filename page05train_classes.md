@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Training CNN
-permalink: traincnn
+permalink: trainclasses
 sidebar: true
 interactive: train_classes.html
 ---
