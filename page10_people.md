@@ -2,7 +2,7 @@
 layout: page
 title: People
 description: About the authors
-img: people.jpg 
+img: people.png 
 caption: "Female empowerment"
 permalink: people
 sidebar: true
