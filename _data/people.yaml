@@ -9,23 +9,16 @@
 # of the `page01_people.md` file.
 # ##############################################################################
 - author:
-  name: Dr. Osophila
-  link: "https://en.wikipedia.org/wiki/Drosophila"
-  title: Postdoctoral Scholar
-  img: dr_osophila.jpg
-  institute: Bicoid Institute of Development
+  name: Victoria Liu
+  link: "https://github.com/liuvictoria"
+  title: Undergraduate student
+  institute: Caltech
   other_info:
-     Email Address: "flyguy@university.edu"
+     Email Address: "vliu@caltech.edu"
 - author:
-  name: Dr. Melanie O'Gaster
-  link: "https://en.wikipedia.org/wiki/Drosophila_melanogaster"
-  title: Postdoctoral Scholar
-  img: melanogaster.jpg
-  institute: French Flag Research Institute
+  name: Gloria Liu
+  link: "https://github.com/gliuu"
+  title: Undergraduate student
+  institute: Rutgers University
   other_info:
-    Current Location: Apple Juice Plates, Inc
-
-- author:
-  name: Sally Monella
-  title: Research Technician
-  institute: French Flag Research Institute
+     Email Address: "gl492@scarletmail.rutgers.edu"
