@@ -10,7 +10,7 @@ body {
 /* Global button style */
 .button {
   font-family: inherit;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   border: none;
   text-decoration: none;
@@ -39,7 +39,7 @@ body {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: left;
 }
 
 .main .title h2 {
