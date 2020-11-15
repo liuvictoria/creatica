@@ -2,7 +2,7 @@
 
 ## Created by Victoria Liu and Gloria Liu
 
-### [See our website documenting our process](https://liuvictoria.github.io/creatica)
+## [See our website documenting our process](https://liuvictoria.github.io/creatica)
 
 
 ## Run with Docker
