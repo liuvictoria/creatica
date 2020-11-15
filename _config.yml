@@ -8,7 +8,7 @@ url: "" # Base of your website.In most cases, this will be left blank
 
 # You can include social icons
 site-twitter: #if your site has a twitter account, enter it here
-social-github: gliuu # add your Github handle here.
+social-github: liuvictoria/creatica # add your Github handle here.
 social-email: vliu@caltech.edu
 
 # If you are using google analytics to track website traffic, you can insert the
