@@ -1,9 +1,9 @@
 ---
 layout: page
-title: Binary Classification
-permalink: binclass
+title: Image Validation
+permalink: imgvalidation
 sidebar: true
-interactive: interactive_1.html
+interactive: validate_images.html
 ---
 ---
 
