@@ -16,8 +16,9 @@ authors: >
 tldr: >
   Imagine a world where only 3 things existed: hotdogs, carrots, and bananas. That's the world Seefood 2.0 lives in. It can classify these 3 foods with 92% validation accuracy. Periscope, here we come! 
 
-About: >
+What It Does: >
   Our web app allows users to drag or upload an image to the application, and then the app will classify it as a hotdog, banana, or carrot with 92% validation accuracy and 94% training accuracy. The app uses a TensorFlow backend with a convolutional neural network that has been trained on thousands of images of hotdogs, bananas, and carrots. To use the web app, clone the Github repository and build it with docker; more instructions can be found on the Github repository. There are also a few clickable links on the web app, but you’ll have to find them yourselves!
+
 
   We know that a fictional hotdog classifier from Silicon Valley motivated us to create this fun idea to life, and we hope that others are also curious to see a real-life hotdog classier! It would be a dream to have others go through our code to learn more about image classification. Since the code is very portable, it can be applied to other machine learning situations as well. 
 
@@ -31,7 +32,9 @@ Summary:  >
 Challenges:  >
   One of the first issues we ran into was that Gloria’s laptop could not download all the images from our script. Thus, we did most of the technical work on Victoria’s laptop. We were lucky enough that one of our computers could handle machine learning, but it also made us cognizant that many people do not have equal access in the world of tech. A solution to this particular problem could have been cloud computing and cloud storage. 
 
+
   When we started collecting training images, we found that a lot of datasets were too small or didn’t have enough variety. We used a script to download thousands of images of hot dogs, carrots, and bananas from Stanford vision lab’s image net. However, a lot of the links to image sets, and to the images themselves, were broken, so we had to manually sort them out. We ran into an issue where we couldn’t find every broken image, leading to problems with the code. We tried to find the broken images for hours, but we simply couldn’t find them among the thousands we had downloaded. So we wrote a script to delete any image that couldn’t be opened by `PIL.Image.open`. We also validated our images by making sure they could be stored with `ImageDataGenerator`, which we used in preprocessing. In addition, the open source code we were using employed an older version of TensorFlow, and some of the functions were already deprecated. We had to fix all of those functions before we could start on creating our own network architecture. In the backend, when we tried to implement 4 classes, we saw that our validation accuracy dropped significantly, so we ended up only using 3, since we were aiming for accuracy. This is something we want to improve on in the future. In the frontend, we had trouble linking our TensorFlow backend to a web app so we ended up using open source for a template. However, the app code needed many modifications because we needed to put our own model onto it. 
+
 
   Finally, morale was occasionally a challenge because there seemed to be an endless number of computer bugs. Nevertheless we prevailed and we are happy that we created this app for the hackathon. 
 
@@ -39,8 +42,11 @@ Challenges:  >
 Acknowledgments: > 
   [Griffin Chure's Reproducible Website](https://github.com/gchure/reproducible_website)
 
+
   [Classification with Convolutional Neural Networks](https://towardsdatascience.com/building-the-hotdog-not-hotdog-classifier-from-hbos-silicon-valley-c0cb2317711f)
 
+
   [InceptionNetV3](https://keras.io/api/applications/inceptionv3/)
+
 
   [Deploying Keras Model with Flask](https://github.com/mtobeiyf/keras-flask-deploy-webapp)
