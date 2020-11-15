@@ -2,7 +2,7 @@
 <head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>validate_images</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>train_classes</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 
 
 
@@ -14271,37 +14271,39 @@ a.anchor-link {
 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Data-Validation">Data Validation<a class="anchor-link" href="#Data-Validation">&#182;</a></h2><p>We assume that we have the following directory structure:
-/data/train/category1</p>
-<p>/data/train/category2etc</p>
-<p>/data/test/category1</p>
-<p>/data/test/category2etc</p>
+<p>This section describes the code behind training our convolutional neural network for recognizing hot dog vs carrots vs bananas. We assume that we've already validated and taken a look at the images we are working with. (Check out <code>Get Data</code> section.)</p>
 
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Data validation is important because it makes sure all the images we are using are working and can be properly preprocessed for training. We present a script for validating images with <code>PIL.Image</code>, and we make sure the images can be preprocessed using <code>ImageDataGenerator</code> as well. The <code>.py</code> version can be run directly from the command line, given a directory (either 'train' or 'test').</p>
-
+<h3 id="Importing-libraries-and-defining-paths-and-constants">Importing libraries and defining paths and constants<a class="anchor-link" href="#Importing-libraries-and-defining-paths-and-constants">&#182;</a></h3>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[53]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">simplejson</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">cv2</span>
 <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span> <span class="nn">send2trash</span> <span class="kn">import</span> <span class="n">send2trash</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
 
 <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 <span class="kn">import</span> <span class="nn">keras</span>
-<span class="kn">from</span> <span class="nn">keras.preprocessing.image</span> <span class="kn">import</span> <span class="n">ImageDataGenerator</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.regularizers</span> <span class="kn">import</span> <span class="n">l2</span>
+<span class="kn">from</span> <span class="nn">keras.preprocessing.image</span> <span class="kn">import</span> <span class="n">ImageDataGenerator</span><span class="p">,</span> <span class="n">array_to_img</span><span class="p">,</span> <span class="n">img_to_array</span><span class="p">,</span> <span class="n">load_img</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span>
+<span class="kn">from</span> <span class="nn">keras.callbacks</span> <span class="kn">import</span> <span class="n">ModelCheckpoint</span>
 <span class="kn">from</span> <span class="nn">keras.applications.inception_v3</span> <span class="kn">import</span> <span class="n">InceptionV3</span><span class="p">,</span> <span class="n">preprocess_input</span>
 
 <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">clear_session</span><span class="p">()</span>
@@ -14312,17 +14314,23 @@ a.anchor-link {
 </div>
 </div>
 
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Like before, we define the data file path and some important constants including the batch size and image size ($299$ x $299$ pixels).</p>
+
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[54]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#define paths and constants</span>
 <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 <span class="n">data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span>
 <span class="c1">#data_path = &quot;/Users/victorialiu/git/creatica/code/data/&quot;</span>
-<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="n">TARGET_SIZE</span> <span class="o">=</span> <span class="mi">299</span>
 </pre></div>
 
@@ -14334,26 +14342,25 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Command-Line-Argument-Parser">Command Line Argument Parser<a class="anchor-link" href="#Command-Line-Argument-Parser">&#182;</a></h3><p>We want to be able to run our code from the command line (at least in the <code>.py</code> version of this notebook), so we use an argument parser to translate command line arguments. We require a subdirectory from which to validate images to see if they are broken.</p>
+<h3 id="Command-Line-Argument-Parser">Command Line Argument Parser<a class="anchor-link" href="#Command-Line-Argument-Parser">&#182;</a></h3><p>We want to be able to run our code from the command line (at least in the <code>.py</code> version of this notebook), so we use an argument parser to translate command line arguments. We require a model name when running the script, as well as what we want the regularizer strength to be (default to $0$). As we'll see later, having a model name makes it much easier to compare models.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1">## Parse command line arguments</span>
 <span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="s1">&#39;--img-directory&#39;</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;subdirectory to validate images from using PIL&#39;</span> <span class="o">+</span>
-            <span class="s1">&#39;train, test&#39;</span><span class="p">,</span>
-        <span class="n">required</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-<span class="c1">#     parser.add_argument(&#39;-t&#39;, &#39;--test-or-train&#39;,</span>
-<span class="c1">#         help=&#39;directory to validate images from using ImageDataGenerator&#39; +</span>
-<span class="c1">#             &#39;test, train&#39;,</span>
-<span class="c1">#         required = True)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="s1">&#39;--model-name&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;prefix for file to save trained model to &#39;</span> <span class="o">+</span>
+            <span class="s1">&#39;(e.g. dense_arch1, conv_regularize05, etc.)&#39;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="s1">&#39;--regularizer-strength&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;strength of l2 regularization to use&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.00</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 </pre></div>
@@ -14366,54 +14373,52 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Data-Validation">Data Validation<a class="anchor-link" href="#Data-Validation">&#182;</a></h3>
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Validate that we can open the image with <code>PIL.Image.open</code></p>
+<h3 id="Image-Pre-processing-with-InceptionV3-net">Image Pre-processing with InceptionV3 net<a class="anchor-link" href="#Image-Pre-processing-with-InceptionV3-net">&#182;</a></h3><p>Next, we do data augmentation in order to "create" more data to train from. Data augmentation includes shifting the image in small ways such that the same image can be trained from multiple perspective (i.e. a rotated image of a hot dog is still a hot dog, and now we'll have more training data). We also make sure to normalize the image by dividing by the maximum pixel value of $255$. We also write a helper function to easily call based on whether we are using testing or training data.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[66]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">validate_images_PIL</span><span class="p">(</span><span class="n">img_directory</span> <span class="o">=</span> <span class="s1">&#39;train&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sends to trash jpg images that cannot be opened with PIL.Image</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">bad_files</span> <span class="o">=</span> <span class="p">[]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">image_data_augment</span><span class="p">(</span><span class="n">rescale</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span> <span class="n">shear_range</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">zoom_range</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">horizontal_flip</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="c1">#declare ImageDataGenerator class for augmenting images using shear, zoom, and flips</span>
+    <span class="c1">#normalize with 1./255</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ImageDataGenerator</span><span class="p">(</span>
+            <span class="n">rescale</span><span class="o">=</span><span class="n">rescale</span><span class="p">,</span>
+            <span class="n">shear_range</span><span class="o">=</span><span class="n">shear_range</span><span class="p">,</span>
+            <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span>
+            <span class="n">horizontal_flip</span><span class="o">=</span><span class="n">horizontal_flip</span><span class="p">))</span>
 
-    <span class="c1">#img_directory is the /train/ or /test/ directory</span>
-    <span class="n">img_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">img_directory</span><span class="p">)</span>
 
-    <span class="c1">#categories_dir gives the full path of</span>
-    <span class="c1">#/train/category1 or /test/category1 etc</span>
-    <span class="n">categories_dirs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">img_directory</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">img_directory</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">img_directory</span><span class="p">,</span> <span class="n">category</span><span class="p">))</span>
-        <span class="p">]</span>
-    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="c1">#go through the full path of each category</span>
-    <span class="k">for</span> <span class="n">category_dir</span> <span class="ow">in</span> <span class="n">categories_dirs</span><span class="p">:</span>
-        <span class="c1">#go through each file of /train/category1 or /test/category1 etc</span>
-        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">category_dir</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.jpg&#39;</span><span class="p">):</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
-                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">category_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-                        <span class="p">)</span>
-                <span class="k">except</span><span class="p">:</span>
-                    <span class="n">bad_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">category_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-                        <span class="p">)</span>
-                    <span class="n">send2trash</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">category_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;bad files according to PIL: </span><span class="si">{</span><span class="n">bad_files</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;removed all bad files to trash&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">bad_files</span>
+
+<span class="k">def</span> <span class="nf">dataframe_categories</span><span class="p">(</span><span class="n">train_or_test</span><span class="p">):</span>
+    <span class="c1">#define new data_path to make life easier</span>
+    <span class="n">data_subpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">train_or_test</span><span class="p">)</span>
+    <span class="c1">#initiate lists for dataframe</span>
+    <span class="n">images_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">data_subpath</span><span class="p">):</span>
+        <span class="c1">#no .DS_Store omg I hate .DS_Store</span>
+        <span class="k">if</span> <span class="n">category</span> <span class="o">!=</span> <span class="s1">&#39;.DS_Store&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_subpath</span><span class="p">,</span> <span class="n">category</span><span class="p">)</span>
+                <span class="p">):</span>
+                <span class="c1">#only use jpg</span>
+                <span class="k">if</span> <span class="n">image</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.jpg&#39;</span><span class="p">:</span>
+                    <span class="n">images_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">image</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">categories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+    <span class="n">images_names</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">images_names</span><span class="p">)</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s1">&#39;filename&#39;</span> <span class="p">:</span> <span class="n">images_names</span><span class="p">,</span>
+        <span class="s1">&#39;class&#39;</span> <span class="p">:</span> <span class="n">categories</span>
+    <span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">df</span>
 </pre></div>
 
      </div>
@@ -14421,42 +14426,31 @@ a.anchor-link {
 </div>
 </div>
 
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Image-Pre-processing-with-InceptionV3-net">Image Pre-processing with InceptionV3 net<a class="anchor-link" href="#Image-Pre-processing-with-InceptionV3-net">&#182;</a></h3><p>Even though we've validated our images with <code>PIL.Image</code>, we would like to validate it with the actual package we are augmenting our images with, <code>ImageDataGenerator</code>. Here, we will validate those images. Rather than automatically removing images to the trash, we return a list of incorrect files that we will manually delete. The description of <code>image_data_augment</code> and <code>get_images</code> is given below, and the actual validation code is given in the code cell block afterwards.</p>
-<p>Next, we do data augmentation in order to "create" more data to train from. Data augmentation includes shifting the image in small ways such that the same image can be trained from multiple perspective (i.e. a rotated image of a hot dog is still a hot dog, and now we'll have more training data). We also make sure to normalize the image by dividing by the maximum pixel value of $255$. We also write a helper function to easily call based on whether we are using testing or training data.</p>
-
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[32]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">image_data_augment</span><span class="p">(</span><span class="n">rescale</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">255</span><span class="p">,</span> <span class="n">shear_range</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">zoom_range</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">horizontal_flip</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    declare ImageDataGenerator class for augmenting images using shear, zoom, and flips</span>
-<span class="sd">    normalize with 1./255</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">ImageDataGenerator</span><span class="p">(</span>
-            <span class="n">rescale</span><span class="o">=</span><span class="n">rescale</span><span class="p">,</span>
-            <span class="n">shear_range</span><span class="o">=</span><span class="n">shear_range</span><span class="p">,</span>
-            <span class="n">zoom_range</span><span class="o">=</span><span class="n">zoom_range</span><span class="p">,</span>
-            <span class="n">horizontal_flip</span><span class="o">=</span><span class="n">horizontal_flip</span><span class="p">))</span>
-
-<span class="k">def</span> <span class="nf">get_images</span><span class="p">(</span><span class="n">train_or_test</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_images</span><span class="p">(</span><span class="n">train_or_test</span><span class="p">):</span>
+    <span class="c1">#augment images</span>
     <span class="k">if</span> <span class="n">train_or_test</span> <span class="o">==</span> <span class="s1">&#39;train&#39;</span><span class="p">:</span>
         <span class="n">datagen</span> <span class="o">=</span> <span class="n">image_data_augment</span><span class="p">(</span><span class="n">shear_range</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">zoom_range</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">horizontal_flip</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">datagen</span> <span class="o">=</span> <span class="n">image_data_augment</span><span class="p">()</span>
 
-    <span class="n">generator</span> <span class="o">=</span> <span class="n">datagen</span><span class="o">.</span><span class="n">flow_from_directory</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">train_or_test</span><span class="p">),</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">dataframe_categories</span><span class="p">(</span><span class="n">train_or_test</span><span class="p">)</span>
+
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">datagen</span><span class="o">.</span><span class="n">flow_from_dataframe</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">,</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">train_or_test</span><span class="p">),</span>
         <span class="n">target_size</span><span class="o">=</span><span class="p">(</span><span class="n">TARGET_SIZE</span><span class="p">,</span> <span class="n">TARGET_SIZE</span><span class="p">),</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-        <span class="n">class_mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">class_mode</span><span class="o">=</span><span class="s1">&#39;categorical&#39;</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">validate_filenames</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">generator</span>
 </pre></div>
 
@@ -14468,34 +14462,73 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Although we have done manual data validation through eyeballing broken images, sometimes human error happens when we are looking through thousands of images! After hours of debugging despair, we decided it's much easier to have the computer debug broken images for us. Here is a function that will tell us all the file names of the broken images. This code is a little clunky, since we are doing it after we've already made the generator.</p>
+<p>In the effort of saving time training the model (which could take overnight and use up precious time) and making the model as accurate as possible, we use transfer learning, where we piggy-back on a pre-trained CNN model that will extract out important features of our data through the bottleneck in the network. We use InceptionV3, and the standard image pre-processing pipeline will always include feeding it through InceptionV3 first. This will make prediction a little slower, but the accuracy and significantly decreased training time (order of minutes) is so worth it. Lastly, we write function <code>get_data()</code> that calls all the previous image-preprocessing helper functions to streamline the process. Notably, we use one-hot vectors for our data labels.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[33]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">determine_invalid_images</span><span class="p">(</span><span class="n">gen</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">preprocess_inception</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    data validation</span>
+<span class="sd">    inception for transfer learning</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">incorrect_files</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gen</span><span class="p">)):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">gen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">incorrect_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">filenames</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;bad index at: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;bad filename DataImageGenerator: </span><span class="si">{</span><span class="n">gen</span><span class="o">.</span><span class="n">filenames</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;need to manually remove&#39;</span><span class="p">)</span>
+    <span class="c1">#transfer learning with InceptionV3, a pre-trained cnn</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">InceptionV3</span><span class="p">(</span>
+        <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;imagenet&#39;</span><span class="p">,</span>
+        <span class="n">include_top</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="n">TARGET_SIZE</span><span class="p">,</span> <span class="n">TARGET_SIZE</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">train_or_test</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s1">&#39;train&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;test&#39;</span>
+        <span class="p">]:</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">get_images</span><span class="p">(</span><span class="n">train_or_test</span><span class="p">)</span>
+
+        <span class="n">bottleneck_features</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">generator</span><span class="p">),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1">#save model with the bottleneck features</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;inception_features_</span><span class="si">{</span><span class="n">train_or_test</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">bottleneck_features</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 
-    <span class="k">return</span> <span class="n">incorrect_files</span>
-<span class="c1"># gen = get_images(&#39;train&#39;)</span>
-<span class="c1"># determine_invalid_images(gen)</span>
+<span class="k">def</span> <span class="nf">get_data</span><span class="p">():</span>
+    <span class="c1">#augment images and use inception net</span>
+    <span class="n">preprocess_inception</span><span class="p">()</span>
+    <span class="c1">#load training data and define labels, where 0 is hotdog and 1 is nothotdog</span>
+    <span class="n">train_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inception_features_train.npz&#39;</span><span class="p">)[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+
+    <span class="c1">#requires the number of hotdog and nothotdog samples to be the exact same</span>
+    <span class="n">train_data_type_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">train_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">train_data_type_count</span> <span class="o">+</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">train_data_type_count</span> <span class="o">+</span>
+        <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">train_data_type_count</span>
+        <span class="p">)</span>
+
+    <span class="c1">#load testing data and define labels, where 0 is hotdog and 1 is nothotdog</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inception_features_test.npz&#39;</span><span class="p">)[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+
+    <span class="c1">#requires the number of hotdog and nothotdog samples to be the exact same</span>
+    <span class="n">test_data_type_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">test_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">test_data_type_count</span> <span class="o">+</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">test_data_type_count</span> <span class="o">+</span>
+        <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">test_data_type_count</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Convert labels to one-hot vectors (probability distributions w/</span>
+    <span class="c1"># probability 1 assigned to the correct label)</span>
+    <span class="n">train_labels</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">to_categorical</span><span class="p">(</span><span class="n">train_labels</span><span class="p">)</span>
+    <span class="n">test_labels</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">to_categorical</span><span class="p">(</span><span class="n">test_labels</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14506,36 +14539,269 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Main-command-line-function">Main command line function<a class="anchor-link" href="#Main-command-line-function">&#182;</a></h3><p>Unfortunately, we've already run this code (a few times!), so there are no longer any more broken images, but we can assure you that it saved us countless hours of going through thousands of images searching for one broken image...</p>
+<h3 id="Convolutional-Neural-Network">Convolutional Neural Network<a class="anchor-link" href="#Convolutional-Neural-Network">&#182;</a></h3><p>Now, we get to the heart of our machine learning model! After being passed through InceptionV3, the feature-extracted version of the image is passed through our own convolutional network. This CNN was largely taken from <a href="https://github.com/J-Yash/Hotdog-Not-Hotdog">J-Yash's open-source code</a>, but we added a regularizer (<code>reg_param</code>), which notably can be inputted from the command line. There are five main convolutional blocks, followed by three fully connected layers. All of our filters are $3 x 3$ matrices. In the first convolutional block, we train $16$ filters; in our second block, we train $32$ filters, max-pool, and regularize via dropout method. In the third block, we train on $64$ filters and regularize via dropout method. In the fourth block, we train $128$ filters and regularize dropout method. In the fifth block, we train $256$ filters twice, before max pooling and doing dropout. We then flatten the data to feed into the fully connected layers, which ultimately output three values, each one representing a different food category. We use a <code>softmax</code> activation for the final output, while we use <code>ReLu</code> for all other layers.</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">build_conv_net</span><span class="p">(</span><span class="n">reg_param</span><span class="p">,</span> <span class="n">train_data_shape</span><span class="p">):</span>
+    <span class="c1">#train_data_shape = train_data.shape[1:] = (8, 8, 2048)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+
+    <span class="c1">#convolutional layer with 32 3x3 trainable filters, using rectified linear units.</span>
+    <span class="c1">#Padding to result in the same shape as the original picture. Add reg_param if true</span>
+    <span class="c1">#use l2 regularization if reg_param is given in command line</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">16</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">input_shape</span><span class="o">=</span><span class="n">train_data_shape</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+<span class="c1">#     # max pooling for noise reduction</span>
+<span class="c1">#     model.add(MaxPooling2D(pool_size=(2, 2)))</span>
+
+
+    <span class="c1"># second block</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">32</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+    <span class="c1"># max pooling for noise reduction</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="c1"># dropout for more regularization</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+
+
+    <span class="c1"># third block</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+<span class="c1">#     model.add(Conv2D(</span>
+<span class="c1">#         64, (3, 3),</span>
+<span class="c1">#         activation=&#39;relu&#39;,</span>
+<span class="c1">#         padding=&#39;same&#39;,</span>
+<span class="c1">#         kernel_regularizer=l2(reg_param)</span>
+<span class="c1">#         ))</span>
+    <span class="c1"># max pooling for noise reduction</span>
+<span class="c1">#     model.add(MaxPooling2D(pool_size=(2, 2)))</span>
+<span class="c1">#     dropout for more regularization</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+
+
+    <span class="c1"># fourth block</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">128</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+<span class="c1">#     model.add(Conv2D(</span>
+<span class="c1">#         128, (3, 3),</span>
+<span class="c1">#         activation=&#39;relu&#39;,</span>
+<span class="c1">#         padding=&#39;same&#39;,</span>
+<span class="c1">#         kernel_regularizer=l2(reg_param)</span>
+<span class="c1">#         ))</span>
+<span class="c1">#     # max pooling for noise reduction</span>
+<span class="c1">#     model.add(MaxPooling2D(pool_size=(2, 2)))</span>
+    <span class="c1"># dropout for more regularization</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+
+
+    <span class="c1">#fifth block</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">256</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span>
+        <span class="mi">256</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span>
+        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+        <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">reg_param</span><span class="p">)</span>
+        <span class="p">))</span>
+<span class="c1">#     model.add(Conv2D(</span>
+<span class="c1">#         256, (3, 3),</span>
+<span class="c1">#         activation=&#39;relu&#39;,</span>
+<span class="c1">#         padding=&#39;same&#39;,</span>
+<span class="c1">#         kernel_regularizer=l2(reg_param)</span>
+<span class="c1">#         ))</span>
+    <span class="c1"># max pooling for noise reduction</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="c1"># dropout for more regularization</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+
+
+    <span class="c1"># fully connected layer</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Flatten</span><span class="p">())</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.6</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+
+
+    <span class="c1">#4 categories</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">activation</span> <span class="o">=</span> <span class="s1">&#39;softmax&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">model</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Ready-to-go">Ready to go<a class="anchor-link" href="#Ready-to-go">&#182;</a></h3><p>The <code>main()</code> function is mainly for the command line, but it can also be run from Jupyter if the right lines are commented out. Notably, we use the Adam optimizer, we calculate loss based on categorical cross-entropy, and we save the MSE to plot. We also have a checkpointer, so that we only save the best model after multiple epochs. The best model is defined the model in which the validation MSE is the lowest, not the training error. We have a 20/80% training vs. validation split, which is generally a good rule of thumb, and we choose $8$ epochs since the accuracy generally peaks within the first $5$ epochs... The saved model is saved as a <code>.h5</code> and <code>.json</code> file under <code>creatica/code/model</code>, so that we can load it in another module. Finally, we output a graph of the loss and accuracy metrics, compared between training and validation sets. The image is actually saved to the <code>/creatica/code/img</code> folder, but it also pops up when the script is run from the command line.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 
 <span class="c1"># comment this out when running from command line!</span>
-    <span class="n">img_directory</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span>
+    <span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;demo&#39;</span>
+    <span class="n">regularizer_strength</span> <span class="o">=</span> <span class="o">.</span><span class="mi">00001</span>
 
 <span class="c1"># #     comment out when not running from cmdline</span>
-<span class="c1"># #     get cmdline args</span>
+<span class="c1">#     ## get cmdline args</span>
 <span class="c1">#     args = parse_args()</span>
-<span class="c1">#     img_directory = args.img_directory</span>
+<span class="c1">#     model_name = args.model_name</span>
+<span class="c1">#     # get regularization strength, if defined. Otherwise, it is 0</span>
+<span class="c1">#     regularizer_strength = args.regularizer_strength</span>
 
 
-    <span class="c1"># validate images with PIL</span>
-    <span class="n">validate_images_PIL</span><span class="p">(</span><span class="n">img_directory</span> <span class="o">=</span> <span class="n">img_directory</span><span class="p">)</span>
+    <span class="c1"># Remove src from cwd if necessary</span>
+    <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span>
 
-    <span class="c1">#validate images of ImageDataGenerator</span>
-    <span class="n">gen</span> <span class="o">=</span> <span class="n">get_images</span><span class="p">(</span><span class="n">img_directory</span><span class="p">)</span>
-    <span class="n">determine_invalid_images</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
+    <span class="c1"># Create img directory to save images if needed</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;img&#39;</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plot_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_learn.png&#39;</span> <span class="o">%</span> <span class="n">model_name</span><span class="p">)</span>
+
+    <span class="c1"># Create model directory to save models if needed</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_weights_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">model_name</span> <span class="o">+</span> <span class="s1">&#39;.h5&#39;</span><span class="p">)</span>
+    <span class="n">model_json_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="n">model_name</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">)</span>
+
+
+    <span class="c1"># Importing the hotdog dataset</span>
+    <span class="c1">#may take a few seconds</span>
+    <span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">()</span>
+    <span class="n">train_data_shape</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+
+
+    <span class="c1"># build model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">build_conv_net</span><span class="p">(</span><span class="n">regularizer_strength</span><span class="p">,</span> <span class="n">train_data_shape</span><span class="p">)</span>
+
+    <span class="c1"># Print a summary of the layers and weights in the model</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+
+    <span class="c1"># Have our model minimize the binary cross entropy loss with the adam</span>
+    <span class="c1"># optimizer (fancier stochastic gradient descent that converges faster)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;categorical_crossentropy&#39;</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MSE&#39;</span><span class="p">])</span>
+
+    <span class="c1"># #set checkpointer to use in callback, to only keep the best model weights</span>
+    <span class="n">checkpointer</span> <span class="o">=</span> <span class="n">ModelCheckpoint</span><span class="p">(</span>
+        <span class="n">filepath</span><span class="o">=</span><span class="s1">&#39;/Users/victorialiu/git/creatica/tmp&#39;</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">save_weights_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1">#time to fit</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+            <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">),</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span><span class="n">checkpointer</span><span class="p">],</span>
+            <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+
+    <span class="c1">#load best model</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s1">&#39;/Users/victorialiu/git/creatica/tmp&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Save model weights and json spec describing the model&#39;s architecture</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model_weights_fname</span><span class="p">)</span>
+    <span class="n">model_json</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">model_json_fname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">simplejson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">simplejson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">model_json</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+
+
+
+<span class="c1">#     # Plot accuracy learning curve</span>
+<span class="c1">#     ax1 = plt.subplot(2, 1, 1)</span>
+<span class="c1">#     plt.plot(history.history[&#39;accuracy&#39;])</span>
+<span class="c1">#     plt.plot(history.history[&#39;val_accuracy&#39;])</span>
+<span class="c1">#     plt.title(&#39;%s accuracy&#39; % model_name)</span>
+<span class="c1">#     plt.ylabel(&#39;Accuracy&#39;)</span>
+<span class="c1">#     plt.xlabel(&#39;Epoch&#39;)</span>
+<span class="c1">#     plt.legend([&#39;Train&#39;, &#39;Validation&#39;], loc=&#39;lower right&#39;)</span>
+<span class="c1">#     plt.savefig(plot_fname)</span>
+
+<span class="c1">#     # Plot loss learning curve</span>
+<span class="c1">#     plt.subplot(2, 1, 2, sharex=ax1)</span>
+<span class="c1">#     plt.plot(history.history[&#39;loss&#39;])</span>
+<span class="c1">#     plt.plot(history.history[&#39;val_loss&#39;])</span>
+<span class="c1">#     plt.title(&#39;%s loss&#39; % model_name)</span>
+<span class="c1">#     plt.ylabel(&#39;Loss&#39;)</span>
+<span class="c1">#     plt.xlabel(&#39;Epoch&#39;)</span>
+<span class="c1">#     plt.legend([&#39;Train&#39;, &#39;Validation&#39;], loc=&#39;upper right&#39;)</span>
+
+
+
+    <span class="c1"># Plot accuracy learning curve</span>
+    <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;MSE&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_MSE&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> accuracy&#39;</span> <span class="o">%</span> <span class="n">model_name</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Accuracy&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="s1">&#39;Validation&#39;</span><span class="p">],</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plot_fname</span><span class="p">)</span>
+
+
+    <span class="c1"># Plot loss learning curve</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> loss&#39;</span> <span class="o">%</span> <span class="n">model_name</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Loss&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="s1">&#39;Validation&#39;</span><span class="p">],</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">)</span>
+
+
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plot_fname</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="kc">True</span>
-<span class="n">main</span><span class="p">()</span>
 
+
+<span class="n">main</span><span class="p">()</span>
 </pre></div>
 
      </div>
@@ -14555,8 +14821,86 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[&#39;/Users/victorialiu/git/creatica/code/data/test/nothotdog&#39;, &#39;/Users/victorialiu/git/creatica/code/data/test/hotdog&#39;, &#39;/Users/victorialiu/git/creatica/code/data/test/cucumbers&#39;]
-Found 311 images belonging to 3 classes.
+<pre>Found 2508 non-validated image filenames belonging to 3 classes.
+157/157 [==============================] - 100s 640ms/step
+Found 150 non-validated image filenames belonging to 3 classes.
+10/10 [==============================] - 5s 494ms/step
+Model: &#34;sequential&#34;
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #
+=================================================================
+conv2d_188 (Conv2D)          (None, 8, 8, 16)          294928
+_________________________________________________________________
+conv2d_189 (Conv2D)          (None, 8, 8, 32)          4640
+_________________________________________________________________
+max_pooling2d_8 (MaxPooling2 (None, 4, 4, 32)          0
+_________________________________________________________________
+dropout (Dropout)            (None, 4, 4, 32)          0
+_________________________________________________________________
+conv2d_190 (Conv2D)          (None, 4, 4, 64)          18496
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 4, 4, 64)          0
+_________________________________________________________________
+conv2d_191 (Conv2D)          (None, 4, 4, 128)         73856
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 4, 4, 128)         0
+_________________________________________________________________
+conv2d_192 (Conv2D)          (None, 4, 4, 256)         295168
+_________________________________________________________________
+conv2d_193 (Conv2D)          (None, 4, 4, 256)         590080
+_________________________________________________________________
+max_pooling2d_9 (MaxPooling2 (None, 2, 2, 256)         0
+_________________________________________________________________
+dropout_3 (Dropout)          (None, 2, 2, 256)         0
+_________________________________________________________________
+flatten (Flatten)            (None, 1024)              0
+_________________________________________________________________
+dense (Dense)                (None, 512)               524800
+_________________________________________________________________
+dropout_4 (Dropout)          (None, 512)               0
+_________________________________________________________________
+dense_1 (Dense)              (None, 256)               131328
+_________________________________________________________________
+dropout_5 (Dropout)          (None, 256)               0
+_________________________________________________________________
+dense_2 (Dense)              (None, 3)                 771
+=================================================================
+Total params: 1,934,067
+Trainable params: 1,934,067
+Non-trainable params: 0
+_________________________________________________________________
+Epoch 1/8
+
+Epoch 00001: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.6362 - MSE: 0.1225 - val_loss: 1.3662 - val_MSE: 0.3387
+Epoch 2/8
+
+Epoch 00002: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.5295 - MSE: 0.1032 - val_loss: 1.4071 - val_MSE: 0.3562
+Epoch 3/8
+
+Epoch 00003: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.5986 - MSE: 0.1080 - val_loss: 1.0744 - val_MSE: 0.2654
+Epoch 4/8
+
+Epoch 00004: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.4734 - MSE: 0.0935 - val_loss: 1.1686 - val_MSE: 0.2983
+Epoch 5/8
+
+Epoch 00005: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 8s - loss: 0.4455 - MSE: 0.0902 - val_loss: 1.3958 - val_MSE: 0.3653
+Epoch 6/8
+
+Epoch 00006: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.4440 - MSE: 0.0911 - val_loss: 1.2252 - val_MSE: 0.3160
+Epoch 7/8
+
+Epoch 00007: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.4698 - MSE: 0.0933 - val_loss: 1.3832 - val_MSE: 0.3559
+Epoch 8/8
+
+Epoch 00008: saving model to /Users/victorialiu/git/creatica/tmp
+126/126 - 7s - loss: 0.4304 - MSE: 0.0886 - val_loss: 1.3510 - val_MSE: 0.3537
 </pre>
 </div>
 </div>
@@ -14564,7 +14908,23 @@ Found 311 images belonging to 3 classes.
 <div class="jp-OutputArea-child">
 
 
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[52]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+
+
+<div class="jp-RenderedImage jp-OutputArea-output ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+<div class="jp-OutputArea-child">
+
+
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
 
 
 
@@ -14584,59 +14944,12 @@ Found 311 images belonging to 3 classes.
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><strong>Authors</strong>: Victoria Liu and Gloria Liu</p>
 <p><strong>Last modified</strong>: November 2020</p>
-<p><strong>Description</strong>: A script to remove broken images and return a list of images incompatible with ImageDataGenerator</p>
+<p>Description: A script to train and save a neural net to recognize hot dogs vs.
+non-hot dogs.</p>
+<p><strong>Credits</strong> Parts of the code are originally part of a Caltech extra credit assignment (CS 156a), where
+Aadyot Bhatnagar wrote the parse_args() and main() functions. The conv-net code is heavily modified from <a href="https://github.com/J-Yash/Hotdog-Not-Hotdog">J-Yash's open-source code</a>. All markdown is done by Victoria / Gloria.</p>
 
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[14]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>jupyter nbconvert --to html validate_images.ipynb
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>[NbConvertApp] Converting notebook validate_images.ipynb to html
-[NbConvertApp] Writing 593365 bytes to validate_images.html
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span>
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
 </div>
 </body>
 
