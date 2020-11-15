@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Evaluate CNN
-permalink: evaluateclass
+title: Evaluating CNN
+permalink: evaluateclasses
 sidebar: true
 interactive: evaluate_classes.html
 ---
