@@ -5,7 +5,7 @@
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
 [Original Flask application](https://github.com/mtobeiyf/keras-flask-deploy-webapp)
 
-[See our website documenting our process](liuvictoria.github.io/creatica)
+[See our website documenting our process](http://liuvictoria.github.io/creatica)
 
 
 ## Run with Docker
